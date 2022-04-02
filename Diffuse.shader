@@ -45,9 +45,10 @@
             fixed4 frag (v2f i) : SV_Target
             {
                 fixed4 col = tex2D(_MainTex, i.uv);
-                fixed lit = max(0, dot(i.normal, _WorldSpaceLightPos0.xyz));
-                fixed4 diffuse = _LightColor0 * lit;
-                col *= diffuse;
+                fixed diff = max(0, dot(i.normal, _WorldSpaceLightPos0.xyz));
+                fixed4 lit = _LightColor0 * diff;
+                lit.rgb += ShadeSH9(half4(i.normal,1));
+                col *= lit;
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 return col;
