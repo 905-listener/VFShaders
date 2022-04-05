@@ -22,17 +22,20 @@
             struct v2f
             {
                 UNITY_FOG_COORDS(1)
-                float4 vertex : SV_POSITION;
+                // ビュー座標
+                float4 svpos : SV_POSITION;
+                // 法線
                 float3 normal : TEXCOORD2;
-                float3 pos : TEXCOORD3;
+                // ワールド座標
+                float3 wpos : TEXCOORD3;
             };
 
             v2f vert (appdata_base v)
             {
                 v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.svpos = UnityObjectToClipPos(v.vertex);
                 o.normal = UnityObjectToWorldNormal(v.normal);
-                o.pos = mul(unity_ObjectToWorld, v.vertex).xyz;
+                o.wpos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
@@ -40,7 +43,9 @@
             fixed4 frag (v2f i) : SV_Target
             {
                 fixed4 c = 0;
-                float3 dir = normalize(UnityWorldSpaceViewDir(i.pos));
+                // ビュー方向  ワールド座標はフラグメントシェーダー内で補完されている？
+                float3 dir = normalize(UnityWorldSpaceViewDir(i.wpos));
+                // 反射方向
                 float3 refl = reflect(-dir, i.normal);
                 float4 skyData = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, refl);
                 float3 skyColor = DecodeHDR(skyData, unity_SpecCube0_HDR);
