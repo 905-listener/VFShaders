@@ -2,6 +2,7 @@
 {
     Properties
     {
+        _Rough ("Roughness", Range(0, 1)) = 0
     }
     SubShader
     {
@@ -40,18 +41,21 @@
                 return o;
             }
 
+            fixed _Rough;
+
             fixed4 frag (v2f i) : SV_Target
             {
                 fixed4 c = 0;
-                // ビュー方向  ワールド座標はフラグメントシェーダー内で補完されている？
+                // ビュー方向
                 float3 dir = normalize(UnityWorldSpaceViewDir(i.wpos));
                 // 反射方向
                 float3 refl = reflect(-dir, i.normal);
-                float4 skyData = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, refl);
-                float3 skyColor = DecodeHDR(skyData, unity_SpecCube0_HDR);
+                // リフレクションプローブを取得するマクロをUNITY_SAMPLE_TEXCUBE_LODにして3つ目の引数にプローブのMip(恐らく0~7)を入れてやるとぼやけ具合を調整できるぽい
+                fixed4 skyData = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, refl, _Rough * 7);
+                fixed3 skyColor = DecodeHDR(skyData, unity_SpecCube0_HDR);
                 c.rgb = skyColor; 
                 // apply fog
-                UNITY_APPLY_FOG(i.fogCoord, col);
+                UNITY_APPLY_FOG(i.fogCoord, c);
                 return c;
             }
             ENDHLSL
